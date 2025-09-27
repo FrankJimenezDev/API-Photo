@@ -1,15 +1,16 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { PhotoService } from './photo.service';
-import { CreatePhotoDto } from './dto/create-photo.dto';
 import { UpdatePhotoDto } from './dto/update-photo.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('photo')
 export class PhotoController {
   constructor(private readonly photoService: PhotoService) {}
 
-  @Post()
-  create(@Body() createPhotoDto: CreatePhotoDto) {
-    return this.photoService.create(createPhotoDto);
+  @Post('upload')
+  @UseInterceptors(FileInterceptor('file'))
+  async upload(@UploadedFile() file: Express.Multer.File) {
+    return await this.photoService.uploadPhoto(file);
   }
 
   @Get()
