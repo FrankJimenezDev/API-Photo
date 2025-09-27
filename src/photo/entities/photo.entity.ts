@@ -1,1 +1,4 @@
-export class Photo {}
+export class Photo {
+    coudinaryPublicId: string;
+    url: string;
+}
