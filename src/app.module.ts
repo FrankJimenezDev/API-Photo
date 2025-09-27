@@ -4,9 +4,11 @@ import { AppService } from './app.service';
 import { PhotoModule } from './photo/photo.module';
 import { ConfigModule } from '@nestjs/config';
 import { DbModule } from './db/db.module';
+import { CloudinaryModule } from './cloudinary/cloudinary.module';
 
 @Module({
   imports: [
+    CloudinaryModule,
     PhotoModule,
     DbModule,
     ConfigModule.forRoot({
