@@ -5,7 +5,7 @@ import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import { Repository } from 'typeorm';
 import { Photo } from './entities/photo.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IPhoto } from 'src/interfaces/phtoto.interface';
+import { IPhoto } from 'src/interfaces/photo.interface';
 
 @Injectable()
 export class PhotoService {
