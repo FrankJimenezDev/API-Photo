@@ -1,19 +1,42 @@
-import { Injectable } from '@nestjs/common';
-import { CreatePhotoDto } from './dto/create-photo.dto';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { PhotoDto } from './dto/create-photo.dto';
 import { UpdatePhotoDto } from './dto/update-photo.dto';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
+import { Repository } from 'typeorm';
+import { Photo } from './entities/photo.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { IPhoto } from 'src/interfaces/phtoto.interface';
 
 @Injectable()
 export class PhotoService {
 
-  constructor(private readonly cloudinaryService: CloudinaryService) {}
+  constructor(
+    private readonly cloudinaryService: CloudinaryService,
+    @InjectRepository(Photo)
+    private readonly photoRepository: Repository<Photo>
+  ) { }
 
-  async uploadPhoto(file: Express.Multer.File) {    
+  async uploadPhoto(file: Express.Multer.File, PhotoDto: PhotoDto) {
     const result = await this.cloudinaryService.uploadImage(file);
-    return {
-      url: result.secure_url,
-      public_id: result.public_id,
-    };
+
+    const photoData: IPhoto = {
+      url: result.secure_url as string,
+      coudinaryPublicId: result.public_id as string,
+      description: PhotoDto.description ,
+      title: PhotoDto.title,
+    }
+
+    const photo: Photo = this.photoRepository.create(photoData);
+
+    try {
+      await this.photoRepository.save(photo);
+      return {
+        message: "Foto Subida Correctamente",
+        ...photo
+      };
+    } catch (error) {
+      throw new InternalServerErrorException('No se pudo guardar la foto en la base de datos');
+    }
   }
 
   findAll() {

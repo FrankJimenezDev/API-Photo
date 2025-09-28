@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, UploadedFile, UseInt
 import { PhotoService } from './photo.service';
 import { UpdatePhotoDto } from './dto/update-photo.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { PhotoDto } from './dto/create-photo.dto';
 
 @Controller('photo')
 export class PhotoController {
@@ -9,8 +10,11 @@ export class PhotoController {
 
   @Post('upload')
   @UseInterceptors(FileInterceptor('file'))
-  async upload(@UploadedFile() file: Express.Multer.File) {
-    return await this.photoService.uploadPhoto(file);
+  async upload(
+    @UploadedFile() file: Express.Multer.File,
+    @Body() photoDto : PhotoDto
+  ) {
+    return await this.photoService.uploadPhoto(file, photoDto);
   }
 
   @Get()
