@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { PhotoDto } from './dto/create-photo.dto';
 import { UpdatePhotoDto } from './dto/update-photo.dto';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
@@ -6,6 +6,7 @@ import { Repository } from 'typeorm';
 import { Photo } from './entities/photo.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IPhoto } from 'src/interfaces/photo.interface';
+import { Transactional } from 'typeorm-transactional';
 
 @Injectable()
 export class PhotoService {
@@ -16,6 +17,7 @@ export class PhotoService {
     private readonly photoRepository: Repository<Photo>
   ) { }
 
+  @Transactional()
   async uploadPhoto(file: Express.Multer.File, PhotoDto: PhotoDto) {
     const result = await this.cloudinaryService.uploadImage(file);
 
@@ -26,32 +28,79 @@ export class PhotoService {
       title: PhotoDto.title,
     }
 
-    const photo: Photo = this.photoRepository.create(photoData);
+    const photo: Photo = this.photoRepository.create({});
 
     try {
       await this.photoRepository.save(photo);
       return {
-        message: "Foto Subida Correctamente",
+        message: "imagen Subida Correctamente",
         ...photo
       };
     } catch (error) {
-      throw new InternalServerErrorException('No se pudo guardar la foto en la base de datos');
+      if (result?.public_id) {
+      await this.cloudinaryService.deleteImage(result.public_id);
+    }
+      throw new InternalServerErrorException('No se pudo guardar la imagen en la base de datos');
     }
   }
 
-  findAll() {
-    return `This action returns all photo`;
+  async findAll() {
+
+    try {
+      const photos : Photo[] = await this.photoRepository.find();
+      if(photos.length === 0){
+        throw new NotFoundException('No hay imagenes en la base de datos');
+      }
+      return photos;
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException(error.message);
+      }
+      throw new InternalServerErrorException('Error al buscar las imagenes');
+    }
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} photo`;
+  async findOne(id: string) {
+    try {
+      const photo : Photo | null = await this.photoRepository.findOneBy({id});
+      if(!photo){
+        throw new NotFoundException('imagen no encontrada');
+      }
+      return photo;
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException(error.message);
+      }
+      throw new InternalServerErrorException('Error al buscar la imagen' );
+    }
   }
 
-  update(id: number, updatePhotoDto: UpdatePhotoDto) {
-    return `This action updates a #${id} photo`;
+  async update(id: string, updatePhotoDto: UpdatePhotoDto) {
+      const photo : Photo = await this.findOne(id)
+
+    try {
+      this.photoRepository.merge(photo, updatePhotoDto);
+      await this.photoRepository.save(photo);
+      return "datos de la imagen actualizados correctamente";
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException(error.message);
+      }
+      throw new InternalServerErrorException('Error al actualizar datos de la imagen');
+    }
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} photo`;
+  @Transactional()
+  async remove(id: string) {
+
+      const photo : Photo = await this.findOne(id);
+
+    try {
+      await this.update(id, {isDeleted: true});
+      await this.cloudinaryService.deleteImage(photo.coudinaryPublicId);
+      return "Foto eliminada correctamente";
+    } catch (error) {
+      throw new InternalServerErrorException('Error al eliminar la imagen');
+    }
   }
 }
