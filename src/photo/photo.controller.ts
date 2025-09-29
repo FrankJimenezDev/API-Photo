@@ -24,16 +24,16 @@ export class PhotoController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.photoService.findOne(+id);
+    return this.photoService.findOne(id);
   }
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updatePhotoDto: UpdatePhotoDto) {
-    return this.photoService.update(+id, updatePhotoDto);
+    return this.photoService.update(id, updatePhotoDto);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.photoService.remove(+id);
+    return this.photoService.remove(id);
   }
 }
