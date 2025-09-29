@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { v2 as cloudinary, UploadApiResponse, UploadApiErrorResponse } from 'cloudinary';
 
 @Injectable()
@@ -12,6 +12,19 @@ export class CloudinaryService {
           resolve(result);
         })
         .end(file.buffer);
+    });
+  }
+
+  // Borrar imagen
+  async deleteImage(publicId: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      cloudinary.uploader.destroy(publicId, (error, result) => {
+        if (error) return reject(new InternalServerErrorException(`No se pudo eliminar la imagen: ${error.message}`));
+        if (result.result !== 'ok' && result.result !== 'not_found') {
+          return reject(new InternalServerErrorException(`Error eliminando imagen: ${result.result}`));
+        }
+        resolve();
+      });
     });
   }
 }
