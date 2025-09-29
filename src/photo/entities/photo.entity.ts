@@ -1,4 +1,4 @@
-import { IsOptional, IsString, MaxLength } from "class-validator";
+import { IsBoolean, IsOptional, IsString, MaxLength } from "class-validator";
 import { IPhoto } from "src/interfaces/photo.interface";
 import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
@@ -26,6 +26,11 @@ export class Photo implements IPhoto {
     @MaxLength(255)
     @Column({ nullable: true })
     description?: string;
+
+    @IsBoolean()
+    @IsOptional()
+    @Column({ default: false })
+    isDeleted?: boolean;
 
     @CreateDateColumn()
     createdAt?: Date;
